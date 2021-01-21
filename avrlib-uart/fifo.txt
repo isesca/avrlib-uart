@@ -1,0 +1,47 @@
+
+#define BUFFER_SIZE    16 // max. 256 (8, 16, 32, 64)
+#define BUFFER_MASK    (BUFFER_SIZE) - 1
+#define BUFFER_FAIL	   0
+#define BUFFER_SUCCESS 1
+
+struct Buffer {
+	uint8_t data[BUFFER_SIZE];
+	uint8_t read;
+	uint8_t write;
+};
+
+
+struct Buffer tx_buffer = { {}, 0, 0 };
+
+// USAGE:
+// buffer_in(&buffer, byte)
+uint8_t buffer_in(struct Buffer *buffer, uint8_t byte) {
+
+	uint8_t next = ( ( buffer->write + 1 ) & BUFFER_MASK );
+
+	if ( buffer->read == next ) {
+		return BUFFER_FAIL; // Buffer voll
+	}
+
+	buffer->data[buffer->write & BUFFER_MASK] = byte; // Undverknüpfung mit Mask um Fehler bei falscher Initialisierung zu verhindern.
+
+	//buffer.write++;
+	buffer->write = next;
+
+	return BUFFER_SUCCESS;
+}
+
+// USAGE:
+// buffer_out(&buffer, &pByte)
+uint8_t buffer_out(struct Buffer *buffer, uint8_t *pByte) {
+	if ( tx_buffer.read == tx_buffer.write ) {
+		return BUFFER_FAIL;
+	}
+
+	*pByte = tx_buffer.data[tx_buffer.read];
+
+	tx_buffer.read = (tx_buffer.read + 1) & BUFFER_MASK;
+
+	return BUFFER_SUCCESS;
+}
+
